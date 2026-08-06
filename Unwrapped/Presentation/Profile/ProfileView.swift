@@ -139,17 +139,6 @@ struct ProfileView: View {
                         } label: {
                             Label("Delete All Data", systemImage: "trash")
                         }
-
-                        #if DEBUG
-                        Button {
-                            Task {
-                                await viewModel.seedRandomEntries()
-                                onDataDeleted()
-                            }
-                        } label: {
-                            Label("Seed Random Entries (Debug)", systemImage: "shuffle")
-                        }
-                        #endif
                     } label: {
                         Label("Manage Storage", systemImage: "internaldrive")
                             .frame(maxWidth: .infinity, alignment: .leading)
