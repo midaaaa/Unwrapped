@@ -64,7 +64,9 @@ struct QuickLogCurrentTrackView: View {
         } catch APIError.noActiveDevice {
             errorMessage = String(localized: "No active Spotify device")
         } catch {
-            errorMessage = error.localizedDescription
+            if !error.isCancellation {
+                errorMessage = error.localizedDescription
+            }
         }
     }
 }

@@ -152,7 +152,9 @@ final class EntryEditorViewModel: Identifiable {
         do {
             try await diaryRepository.save(entry)
         } catch {
-            self.errorMessage = error.localizedDescription
+            if !error.isCancellation {
+                self.errorMessage = error.localizedDescription
+            }
         }
     }
 
@@ -164,7 +166,9 @@ final class EntryEditorViewModel: Identifiable {
         do {
             try await diaryRepository.deleteEntry(id: existingEntry.id)
         } catch {
-            self.errorMessage = error.localizedDescription
+            if !error.isCancellation {
+                self.errorMessage = error.localizedDescription
+            }
         }
     }
 }

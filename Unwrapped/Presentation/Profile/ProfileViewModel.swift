@@ -34,7 +34,9 @@ final class ProfileViewModel {
         do {
             profile = try await repository.fetchProfile()
         } catch {
-            errorMessage = error.localizedDescription
+            if !error.isCancellation {
+                errorMessage = error.localizedDescription
+            }
         }
     }
 
@@ -44,7 +46,9 @@ final class ProfileViewModel {
             try await tasteRepository.clearOrphanedCache()
             ImageMemoryCache.shared.clear()
         } catch {
-            storageErrorMessage = error.localizedDescription
+            if !error.isCancellation {
+                storageErrorMessage = error.localizedDescription
+            }
         }
     }
 
@@ -56,7 +60,9 @@ final class ProfileViewModel {
             try await tasteRepository.clearOrphanedCache()
             ImageMemoryCache.shared.clear()
         } catch {
-            storageErrorMessage = error.localizedDescription
+            if !error.isCancellation {
+                storageErrorMessage = error.localizedDescription
+            }
         }
     }
 

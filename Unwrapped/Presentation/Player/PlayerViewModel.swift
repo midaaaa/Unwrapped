@@ -101,7 +101,7 @@ final class PlayerViewModel {
             let adjustedState = adjustProgressForNetworkDelay(playingState, delay: networkDuration)
             setCurrentlyPlaying(adjustedState)
         } catch {
-            if !Self.isCancellation(error) {
+            if !error.isTransientNetworkGlitch {
                 errorMessage = error.localizedDescription
             }
         }
@@ -172,7 +172,9 @@ final class PlayerViewModel {
                 pendingPlaybackCommand = nil
                 setCurrentlyPlaying(.active(state))
             } catch {
-                errorMessage = error.localizedDescription
+                if !error.isTransientNetworkGlitch {
+                    errorMessage = error.localizedDescription
+                }
                 pendingPlaybackCommand = nil
                 setCurrentlyPlaying(.active(state))
             }
@@ -206,7 +208,7 @@ final class PlayerViewModel {
             let saved = try await diaryRepository.save(entry)
             trackEntries = TimelineActiveEntryResolver.sorted(trackEntries + [saved])
         } catch {
-            if !Self.isCancellation(error) {
+            if !error.isTransientNetworkGlitch {
                 errorMessage = error.localizedDescription
             }
         }
@@ -247,16 +249,10 @@ final class PlayerViewModel {
                 setCurrentlyPlaying(fetchedState)
             }
         } catch {
-            if !Self.isCancellation(error) {
+            if !error.isTransientNetworkGlitch {
                 errorMessage = error.localizedDescription
             }
         }
-    }
-
-    private static func isCancellation(_ error: Error) -> Bool {
-        if error is CancellationError { return true }
-        if let urlError = error as? URLError, urlError.code == .cancelled { return true }
-        return false
     }
 
     private func shouldUpdateState(newResponse: PlaybackResponse<CurrentlyPlayingState>) -> Bool {

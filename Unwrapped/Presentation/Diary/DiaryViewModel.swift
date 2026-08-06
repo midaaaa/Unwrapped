@@ -54,7 +54,9 @@ final class DiaryViewModel {
         do {
             entries = try await diaryRepository.fetchAllEntries()
         } catch {
-            errorMessage = error.localizedDescription
+            if !error.isCancellation {
+                errorMessage = error.localizedDescription
+            }
         }
     }
 
@@ -64,7 +66,9 @@ final class DiaryViewModel {
         do {
             try await diaryRepository.deleteEntry(id: entry.id)
         } catch {
-            deleteErrorMessage = error.localizedDescription
+            if !error.isCancellation {
+                deleteErrorMessage = error.localizedDescription
+            }
             if let restored = try? await diaryRepository.fetchAllEntries() {
                 entries = restored
             }

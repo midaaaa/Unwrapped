@@ -44,7 +44,9 @@ final class LogViewModel {
         } catch APIError.unauthorized {
             isUnauthenticated = true
         } catch {
-            errorMessage = error.localizedDescription
+            if !error.isCancellation {
+                errorMessage = error.localizedDescription
+            }
         }
     }
 }
