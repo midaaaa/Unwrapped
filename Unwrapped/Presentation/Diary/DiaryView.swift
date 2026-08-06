@@ -211,7 +211,15 @@ struct DiaryView: View {
                     Section {
                         ForEach(section.entries) { entry in entryRow(entry) }
                     } header: {
-                        Text(section.id, format: .relative(presentation: .named))
+                        if Calendar.current.isDateInToday(section.id) {
+                            Text("Today")
+                        } else if Calendar.current.isDateInYesterday(section.id) {
+                            Text("Yesterday")
+                        } else if Calendar.current.isDate(section.id, equalTo: .now, toGranularity: .year) {
+                            Text(section.id.formatted(.dateTime.day().month(.wide)))
+                        } else {
+                            Text(section.id.formatted(.dateTime.day().month(.wide).year()))
+                        }
                     }
                     .listSectionSeparator(.hidden, edges: [.top, .bottom])
                 }
