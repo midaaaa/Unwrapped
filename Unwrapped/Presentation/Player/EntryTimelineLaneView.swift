@@ -85,7 +85,9 @@ struct EntryTimelineLaneView: View {
     }
 
     private func snapLane(to id: DiaryEntry.ID) {
-        laneScrollPosition = nil
+        if laneScrollPosition == id {
+            laneScrollPosition = nil
+        }
         Task { @MainActor in
             guard !isLaneUserControlled else { return }
             withAnimation(Self.laneSnapAnimation) {
