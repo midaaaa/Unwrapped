@@ -42,6 +42,7 @@ struct SecondsRulerPicker: View {
     private static let flingVelocityThreshold: Double = 40
     private static let touchFadeDuration: TimeInterval = 0.6
     private static let hitboxWidthPoints: CGFloat = 1
+    private static let tickCapMargin: CGFloat = 2
 
     @State private var dragStartProgressMs: Int?
     @State private var snapAnimation: SnapAnimation?
@@ -153,12 +154,17 @@ struct SecondsRulerPicker: View {
                     tickColor = tickColor.opacity(0.03 + 0.97 * ((1 - progressOnPath) / hookFraction))
                 }
 
+                let capOvershoot = lineWidth / 2
+                let basePoint = CGPoint(
+                    x: currentPoint.x - cos(normalAngle) * capOvershoot,
+                    y: currentPoint.y - sin(normalAngle) * capOvershoot + Self.tickCapMargin
+                )
                 let endPoint = CGPoint(
                     x: currentPoint.x - cos(normalAngle) * height,
-                    y: currentPoint.y - sin(normalAngle) * height
+                    y: currentPoint.y - sin(normalAngle) * height + Self.tickCapMargin
                 )
                 var tickPath = Path()
-                tickPath.move(to: currentPoint)
+                tickPath.move(to: basePoint)
                 tickPath.addLine(to: endPoint)
                 context.stroke(
                     tickPath,
@@ -167,6 +173,7 @@ struct SecondsRulerPicker: View {
                 )
             }
         }
+        .frame(width: size.width, height: size.height + Self.tickCapMargin * 2)
         .frame(width: size.width, height: size.height)
     }
 
