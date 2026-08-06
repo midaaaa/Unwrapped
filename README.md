@@ -6,9 +6,16 @@ Spotify tells you what you listened to once a year. Unwrapped is for the rest of
 
 It's an iOS app for logging how you actually feel about the music you're listening to, right as you're listening to it — a quick tap on a mood, or a proper note if a track deserves one. Over time those little moments turn into a real diary of your listening life, and the app turns that diary back into something closer to a running, personal version of Wrapped: streaks, mood trends, the tracks and artists that quietly took over a given week, and how your taste has been drifting.
 
-<img src="docs/media/1%20Player%20Active%20Entry.png" width="280" alt="Player screen with an active logged entry on the current track" />
+<table>
+<tr>
+<td><img src="docs/media/1%20Player%20Active%20Entry.png" width="280" alt="Player screen with an active logged entry on the current track" /></td>
+<td>
 
 https://github.com/user-attachments/assets/fdadee25-7d0e-428c-822f-3c4e316125fd
+
+</td>
+</tr>
+</table>
 
 ## What it's actually like to use
 
@@ -46,11 +53,19 @@ And then there's Stats. Recap is the part that pulls it all together: a grid of 
 <td><img src="docs/media/13%20Log%20Swipe%20Spotify%20Link.png" width="280" alt="Log tab, swiped row revealing the Spotify deep-link button" /></td>
 <td><img src="docs/media/14%20Diary%20Entry%20Detail.png" width="280" alt="Diary entry detail viewer" /></td>
 </tr>
-</table>
+<tr>
+<td>
 
 https://github.com/user-attachments/assets/eee247db-1220-4973-8058-33858c0fc3f7
 
+</td>
+<td>
+
 https://github.com/user-attachments/assets/dc56caf9-b361-4197-9aa6-bc07f50e261d
+
+</td>
+</tr>
+</table>
 
 </details>
 
