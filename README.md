@@ -1,21 +1,20 @@
+<img src="docs/media/App%20Icon.png" width="96" alt="Unwrapped app icon" />
+
 # Unwrapped
 
 Spotify tells you what you listened to once a year. Unwrapped is for the rest of the time.
 
 It's an iOS app for logging how you actually feel about the music you're listening to, right as you're listening to it — a quick tap on a mood, or a proper note if a track deserves one. Over time those little moments turn into a real diary of your listening life, and the app turns that diary back into something closer to a running, personal version of Wrapped: streaks, mood trends, the tracks and artists that quietly took over a given week, and how your taste has been drifting.
 
-<table>
-<tr>
-<td><img src="docs/media/1%20Player%20Active%20Entry.png" width="280" alt="Player screen with an active logged entry on the current track" /></td>
-<td><video src="docs/media/2%20Full%20Log%20To%20Entry%20Process.mp4" width="280" controls muted playsinline></video></td>
-</tr>
-</table>
+<img src="docs/media/1%20Player%20Active%20Entry.png" width="280" alt="Player screen with an active logged entry on the current track" />
+
+https://github.com/user-attachments/assets/fdadee25-7d0e-428c-822f-3c4e316125fd
 
 ## What it's actually like to use
 
 You open the app, and whatever's currently playing on Spotify is right there — album art, progress bar, play/pause that actually controls playback. Underneath it, a strip of mood chips: happy, nostalgic, hyped, whatever fits. Tap one and it's logged, timestamped to the exact second you were at in the track. If a track deserves more than an emoji, you can drop into a proper entry instead — a title, a note, a spot on the track's own timeline where the moment happened.
 
-<video src="docs/media/4%20Timeline%20Magnetic%20Scroll.mp4" width="280" controls muted playsinline></video>
+https://github.com/user-attachments/assets/427d328a-c3aa-4469-a2e4-ae96bd3aab3e
 
 Every entry you've ever logged lives in a diary you can actually browse — not just a flat list. Switch between looking at it by entry, by track, or by artist; sort however makes sense that day; filter down to a mood or a date range. Tap into anything to read it back or edit it.
 
@@ -48,8 +47,8 @@ And then there's Stats. Recap is the part that pulls it all together: a grid of 
 <td><img src="docs/media/14%20Diary%20Entry%20Detail.png" width="280" alt="Diary entry detail viewer" /></td>
 </tr>
 <tr>
-<td><video src="docs/media/8%20Add%20Tag%20First%20Entry.mp4" width="280" controls muted playsinline></video></td>
-<td><video src="docs/media/9%20Add%20Tag%20Existing%20Entries.mp4" width="280" controls muted playsinline></video></td>
+<td>https://github.com/user-attachments/assets/eee247db-1220-4973-8058-33858c0fc3f7</td>
+<td>https://github.com/user-attachments/assets/dc56caf9-b361-4197-9aa6-bc07f50e261d</td>
 </tr>
 </table>
 
