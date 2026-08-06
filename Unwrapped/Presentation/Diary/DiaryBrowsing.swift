@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum DiaryBrowseMode: CaseIterable {
+enum DiaryBrowseMode: String, CaseIterable {
     case entries, tracks, artists
 
     var label: LocalizedStringKey {
@@ -27,7 +27,7 @@ enum DiaryBrowseMode: CaseIterable {
     }
 }
 
-enum DiarySortField: CaseIterable {
+enum DiarySortField: String, CaseIterable {
     case date, count, name
 
     static func availableFields(for mode: DiaryBrowseMode) -> [DiarySortField] {
@@ -51,7 +51,7 @@ enum DiarySortField: CaseIterable {
     }
 }
 
-enum DiarySortDirection {
+enum DiarySortDirection: String {
     case ascending, descending
 
     var toggled: DiarySortDirection { self == .ascending ? .descending : .ascending }

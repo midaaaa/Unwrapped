@@ -16,12 +16,23 @@ final class DiaryViewModel {
     var deleteErrorMessage: String?
 
     var searchText = ""
-    var browseMode: DiaryBrowseMode = .entries
-    var groupByDay = false
     var filter = DiaryFilter()
 
-    private(set) var sortField: DiarySortField = .date
-    private(set) var sortDirection: DiarySortDirection = .descending
+    var browseMode: DiaryBrowseMode {
+        didSet { UserDefaults.standard.set(browseMode.rawValue, forKey: AppSettingsKeys.diaryBrowseMode) }
+    }
+
+    var groupByDay: Bool {
+        didSet { UserDefaults.standard.set(groupByDay, forKey: AppSettingsKeys.diaryGroupByDay) }
+    }
+
+    private(set) var sortField: DiarySortField {
+        didSet { UserDefaults.standard.set(sortField.rawValue, forKey: AppSettingsKeys.diarySortField) }
+    }
+
+    private(set) var sortDirection: DiarySortDirection {
+        didSet { UserDefaults.standard.set(sortDirection.rawValue, forKey: AppSettingsKeys.diarySortDirection) }
+    }
 
     private let diaryRepository: DiaryRepositoryProtocol
     private let spotifyRepository: SpotifyRepositoryProtocol
@@ -42,6 +53,15 @@ final class DiaryViewModel {
         self.diaryRepository = diaryRepository
         self.spotifyRepository = spotifyRepository
         self.tasteRepository = tasteRepository
+
+        let defaults = UserDefaults.standard
+        browseMode = defaults.string(forKey: AppSettingsKeys.diaryBrowseMode)
+            .flatMap(DiaryBrowseMode.init(rawValue:)) ?? .entries
+        groupByDay = defaults.bool(forKey: AppSettingsKeys.diaryGroupByDay)
+        sortField = defaults.string(forKey: AppSettingsKeys.diarySortField)
+            .flatMap(DiarySortField.init(rawValue:)) ?? .date
+        sortDirection = defaults.string(forKey: AppSettingsKeys.diarySortDirection)
+            .flatMap(DiarySortDirection.init(rawValue:)) ?? .descending
     }
 
     // MARK: - Loading & deletion
