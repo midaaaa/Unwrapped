@@ -46,11 +46,11 @@ And then there's Stats. Recap is the part that pulls it all together: a grid of 
 <td><img src="docs/media/13%20Log%20Swipe%20Spotify%20Link.png" width="280" alt="Log tab, swiped row revealing the Spotify deep-link button" /></td>
 <td><img src="docs/media/14%20Diary%20Entry%20Detail.png" width="280" alt="Diary entry detail viewer" /></td>
 </tr>
-<tr>
-<td>https://github.com/user-attachments/assets/eee247db-1220-4973-8058-33858c0fc3f7</td>
-<td>https://github.com/user-attachments/assets/dc56caf9-b361-4197-9aa6-bc07f50e261d</td>
-</tr>
 </table>
+
+https://github.com/user-attachments/assets/eee247db-1220-4973-8058-33858c0fc3f7
+
+https://github.com/user-attachments/assets/dc56caf9-b361-4197-9aa6-bc07f50e261d
 
 </details>
 
