@@ -43,8 +43,12 @@ struct OnboardingView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 32) {
-                    Text("Welcome to Unwrapped")
-                        .font(.largeTitle.bold())
+                    VStack(alignment: .leading, spacing: 16) {
+                        AppIconImage()
+
+                        Text("Welcome to Unwrapped")
+                            .font(.largeTitle.bold())
+                    }
 
                     VStack(alignment: .leading, spacing: 28) {
                         ForEach(features) { feature in
