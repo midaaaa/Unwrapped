@@ -167,8 +167,8 @@ struct EntryEditorView: View {
                 }
             }
             .padding(12)
-            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .padding(12)
+            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .padding(.vertical, 6)
         }
         .listRowInsets(EdgeInsets())
         .listRowBackground(Color.clear)
