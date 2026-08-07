@@ -24,11 +24,13 @@ struct DiaryView: View {
                 .navigationTitle("Diary")
                 .searchable(text: $viewModel.searchText, prompt: "Search entries")
                 .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        viewMenu
-                    }
-                    ToolbarItem(placement: .topBarLeading) {
-                        filterMenu
+                    if !viewModel.entries.isEmpty {
+                        ToolbarItem(placement: .topBarLeading) {
+                            viewMenu
+                        }
+                        ToolbarItem(placement: .topBarLeading) {
+                            filterMenu
+                        }
                     }
                     ToolbarItem(placement: .topBarTrailing) {
                         ProfileAvatarButton(imageURL: profileImageURL, onTap: onProfileTap)
