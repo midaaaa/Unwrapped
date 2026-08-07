@@ -27,42 +27,56 @@ struct ProfileView: View {
         NavigationStack {
             List {
                 Section {
-                    if !isAuthenticated {
-                        signInRow
-                    } else if let profile = viewModel.profile {
-                        HStack(spacing: 14) {
-                            CachedAsyncImage(url: profile.imageURL, size: 60, sizing: .fixedSquare) {
-                                Image(systemName: "person.crop.circle.fill")
-                                    .resizable()
+                    Group {
+                        if !isAuthenticated {
+                            signInRow
+                        } else if let profile = viewModel.profile {
+                            HStack(spacing: 14) {
+                                CachedAsyncImage(url: profile.imageURL, size: 60, sizing: .fixedSquare) {
+                                    Image(systemName: "person.crop.circle.fill")
+                                        .resizable()
+                                        .foregroundStyle(.secondary)
+                                }
+                                .clipShape(Circle())
+
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(profile.displayName)
+                                        .font(.title3.bold())
+                                    HStack(spacing: 12) {
+                                        if let country = profile.country {
+                                            Label(country, systemImage: "globe")
+                                        }
+                                        Label(profile.product.rawValue.capitalized, systemImage: "sparkles")
+                                    }
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                }
+                            }
+                        } else if viewModel.isRegionRestricted {
+                            HStack(spacing: 14) {
+                                Image(systemName: "hand.raised.slash")
+                                    .font(.system(size: 32))
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 60, height: 60)
+
+                                Text("Profile Unavailable in Your Region")
+                                    .font(.subheadline.weight(.medium))
+                            }
+                        } else if let errorMessage = viewModel.errorMessage {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Couldn't load profile")
+                                    .font(.subheadline.weight(.medium))
+                                Text(errorMessage)
+                                    .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
-                            .clipShape(Circle())
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(profile.displayName)
-                                    .font(.title3.bold())
-                                HStack(spacing: 12) {
-                                    if let country = profile.country {
-                                        Label(country, systemImage: "globe")
-                                    }
-                                    Label(profile.product.rawValue.capitalized, systemImage: "sparkles")
-                                }
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            }
+                        } else {
+                            ProgressView()
+                                .frame(maxWidth: .infinity, alignment: .center)
                         }
-                        .padding(.vertical, 4)
-                    } else if let errorMessage = viewModel.errorMessage {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Couldn't load profile")
-                                .font(.subheadline.weight(.medium))
-                            Text(errorMessage)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    } else {
-                        ProgressView()
                     }
+                    .frame(minHeight: 60, alignment: .leading)
+                    .padding(.vertical, 4)
                 }
 
                 Section("Settings") {
@@ -223,7 +237,6 @@ struct ProfileView: View {
                         .foregroundStyle(.tertiary)
                 }
             }
-            .padding(.vertical, 4)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

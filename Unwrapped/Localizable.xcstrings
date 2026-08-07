@@ -1473,6 +1473,22 @@
         }
       }
     },
+    "Genres will appear here shortly.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Genres will appear here shortly."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Жанры скоро появятся."
+          }
+        }
+      }
+    },
     "Grateful": {
       "localizations": {
         "en": {
@@ -2341,6 +2357,22 @@
         }
       }
     },
+    "Not Available in Your Region": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not Available in Your Region"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Недоступно в вашем регионе"
+          }
+        }
+      }
+    },
     "Not authenticated": {
       "localizations": {
         "en": {
@@ -2561,6 +2593,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Профиль"
+          }
+        }
+      }
+    },
+    "Profile Unavailable in Your Region": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profile Unavailable in Your Region"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Профиль недоступен в вашем регионе"
           }
         }
       }
@@ -3013,6 +3061,22 @@
         }
       }
     },
+    "Spotify is blocking this request from your location.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spotify is blocking this request from your location."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spotify блокирует этот запрос из вашего местоположения."
+          }
+        }
+      }
+    },
     "Spotify says %@": {
       "localizations": {
         "en": {
@@ -3419,6 +3483,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Без названия"
+          }
+        }
+      }
+    },
+    "Updating…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updating…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обновление…"
           }
         }
       }

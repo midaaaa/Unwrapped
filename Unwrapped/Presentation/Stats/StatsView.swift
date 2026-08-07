@@ -123,6 +123,12 @@ struct StatsView: View {
                     systemImage: "wifi.slash",
                     description: Text("Sign in with Spotify to see your top tracks.")
                 )
+            } else if viewModel.isTopItemsRegionRestricted {
+                EmptyStateRow(
+                    title: "Not Available in Your Region",
+                    systemImage: "hand.raised.slash",
+                    description: Text("Spotify is blocking this request from your location.")
+                )
             } else if let message = viewModel.topItemsErrorMessage, viewModel.topTracks.isEmpty {
                 EmptyStateRow(
                     title: "Couldn't load top tracks",
@@ -152,6 +158,12 @@ struct StatsView: View {
                     title: "Sign in Required",
                     systemImage: "wifi.slash",
                     description: Text("Sign in with Spotify to see your top artists.")
+                )
+            } else if viewModel.isTopItemsRegionRestricted {
+                EmptyStateRow(
+                    title: "Not Available in Your Region",
+                    systemImage: "hand.raised.slash",
+                    description: Text("Spotify is blocking this request from your location.")
                 )
             } else if let message = viewModel.topItemsErrorMessage, viewModel.topArtists.isEmpty {
                 EmptyStateRow(

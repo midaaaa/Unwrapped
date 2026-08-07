@@ -13,6 +13,7 @@ final class ProfileViewModel {
     var profile: UserProfile?
     var errorMessage: String?
     var storageErrorMessage: String?
+    var isRegionRestricted = false
 
     private let repository: SpotifyRepositoryProtocol
     private let diaryRepository: DiaryRepositoryProtocol
@@ -30,9 +31,12 @@ final class ProfileViewModel {
 
     func load() async {
         errorMessage = nil
+        isRegionRestricted = false
 
         do {
             profile = try await repository.fetchProfile()
+        } catch APIError.forbidden {
+            isRegionRestricted = true
         } catch {
             if !error.isCancellation {
                 errorMessage = error.localizedDescription

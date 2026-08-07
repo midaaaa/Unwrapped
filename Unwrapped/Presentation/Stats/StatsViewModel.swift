@@ -30,6 +30,7 @@ final class StatsViewModel {
     private(set) var recapSnapshots: [TasteSnapshot] = []
 
     var topItemsErrorMessage: String?
+    var isTopItemsRegionRestricted = false
     var entriesErrorMessage: String?
     var isUnauthenticated = false
 
@@ -86,6 +87,7 @@ final class StatsViewModel {
 
     func loadTopItems() async {
         topItemsErrorMessage = nil
+        isTopItemsRegionRestricted = false
         isUnauthenticated = false
 
         do {
@@ -99,8 +101,12 @@ final class StatsViewModel {
             isUnauthenticated = true
         } catch APIError.unauthorized {
             isUnauthenticated = true
+        } catch APIError.forbidden {
+            isTopItemsRegionRestricted = true
         } catch {
-            topItemsErrorMessage = error.localizedDescription
+            if !error.isCancellation {
+                topItemsErrorMessage = error.localizedDescription
+            }
         }
     }
 
