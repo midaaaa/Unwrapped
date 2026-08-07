@@ -48,6 +48,8 @@ final class StatsViewModel {
         self.tasteRepository = tasteRepository
     }
 
+    private(set) var hasLoadedEntriesOnce = false
+
     func loadEntries() async {
         entriesErrorMessage = nil
         do {
@@ -55,6 +57,7 @@ final class StatsViewModel {
         } catch {
             entriesErrorMessage = error.localizedDescription
         }
+        hasLoadedEntriesOnce = true
     }
 
     func loadRecapSnapshots() async {
@@ -216,13 +219,57 @@ final class StatsViewModel {
 
     private(set) var genreBreakdownIsLoading = false
     private var artistGenresCache: [String: [String]] = [:]
+    private var genreFetchRetryDates: [String: Date] = [:]
+    private var genreBreakdownInFlight: Task<Void, Never>?
 
     private static let genreStalenessInterval: TimeInterval = 14 * 24 * 60 * 60
     private static let genreFetchSpacingNanoseconds: UInt64 = 150_000_000
+    private static let genreFetchRetryBackoff: TimeInterval = 5 * 60
+
+    enum GenreSectionStatus {
+        case loading
+        case pending
+        case empty
+        case loaded
+    }
+
+    var genreSectionStatus: GenreSectionStatus {
+        if genreBreakdownIsLoading { return .loading }
+        if !genreCounts.isEmpty { return .loaded }
+        guard hasLoadedEntriesOnce else { return .pending }
+        if hasUnresolvedArtistData { return .pending }
+        return .empty
+    }
+
+    private var hasUnresolvedArtistData: Bool {
+        let hasUnresolvedRelationship = periodEntries.contains { entry in
+            guard let track = entry.track else { return false }
+            return track.artistIds.isEmpty && !track.artistNames.isEmpty
+        }
+        guard !hasUnresolvedRelationship else { return true }
+
+        let artistIds = Set(periodEntries.compactMap(\.track).flatMap(\.artistIds))
+        return artistIds.contains { artistGenresCache[$0] == nil }
+    }
 
     func loadGenreBreakdown() async {
-        let artistIds = Set(periodEntries.compactMap(\.track).flatMap { $0.artistGroupingKeys.map(\.id) })
-        let unresolvedIds = artistIds.filter { artistGenresCache[$0] == nil }
+        if let inFlight = genreBreakdownInFlight {
+            await inFlight.value
+            return
+        }
+        let task = Task { await performGenreBreakdownLoad() }
+        genreBreakdownInFlight = task
+        await task.value
+        genreBreakdownInFlight = nil
+    }
+
+    private func performGenreBreakdownLoad() async {
+        let artistIds = Set(periodEntries.compactMap(\.track).flatMap(\.artistIds))
+        let unresolvedIds = artistIds.filter { id in
+            guard artistGenresCache[id] == nil else { return false }
+            guard let retryDate = genreFetchRetryDates[id] else { return true }
+            return Date() >= retryDate
+        }
         guard !unresolvedIds.isEmpty else { return }
 
         var idsNeedingFetch: [String] = []
@@ -244,12 +291,20 @@ final class StatsViewModel {
         defer { genreBreakdownIsLoading = false }
 
         for artistId in idsNeedingFetch {
-            guard let fetched = try? await spotifyRepository.fetchArtist(id: artistId) else {
-                artistGenresCache[artistId] = artistGenresCache[artistId] ?? []
-                continue
+            do {
+                let fetched = try await spotifyRepository.fetchArtist(id: artistId)
+                _ = try? await tasteRepository.upsertArtist(fetched)
+                artistGenresCache[artistId] = fetched.genres
+                genreFetchRetryDates[artistId] = nil
+            } catch APIError.rateLimited(let retryAfter) {
+                let delay = retryAfter ?? Self.genreFetchRetryBackoff
+                for remainingId in idsNeedingFetch where artistGenresCache[remainingId] == nil {
+                    genreFetchRetryDates[remainingId] = Date().addingTimeInterval(delay)
+                }
+                break
+            } catch {
+                genreFetchRetryDates[artistId] = Date().addingTimeInterval(Self.genreFetchRetryBackoff)
             }
-            _ = try? await tasteRepository.upsertArtist(fetched)
-            artistGenresCache[artistId] = fetched.genres
             try? await Task.sleep(nanoseconds: Self.genreFetchSpacingNanoseconds)
         }
     }

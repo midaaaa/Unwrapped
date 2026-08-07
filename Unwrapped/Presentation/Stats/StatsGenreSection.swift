@@ -13,20 +13,27 @@ struct StatsGenreSection: View {
 
     var body: some View {
         Section("Genres") {
-            if viewModel.genreBreakdownIsLoading && viewModel.genreCounts.isEmpty {
+            switch viewModel.genreSectionStatus {
+            case .loading:
                 HStack {
                     Spacer()
                     ProgressView()
                     Spacer()
                 }
                 .padding(.vertical, 8)
-            } else if viewModel.genreCounts.isEmpty {
+            case .pending:
+                EmptyStateRow(
+                    title: "Updating…",
+                    systemImage: "arrow.triangle.2.circlepath",
+                    description: Text("Genres will appear here shortly.")
+                )
+            case .empty:
                 EmptyStateRow(
                     title: "No genres yet",
                     systemImage: "guitars",
                     description: Text("Log tracks to see which genres you reach for most.")
                 )
-            } else {
+            case .loaded:
                 chart
             }
         }

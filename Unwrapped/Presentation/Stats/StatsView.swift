@@ -79,6 +79,7 @@ struct StatsView: View {
             }
             .onChange(of: viewModel.entries) { _, _ in
                 revealSummaryCounts()
+                Task { await viewModel.loadGenreBreakdown() }
             }
             .navigationDestination(item: $scopedTarget) { target in
                 DiaryScopedEntriesView(
