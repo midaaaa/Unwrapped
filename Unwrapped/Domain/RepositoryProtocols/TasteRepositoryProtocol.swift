@@ -25,6 +25,4 @@ protocol TasteRepositoryProtocol: Sendable {
     func upsertArtist(_ artist: Artist) async throws -> Artist
 
     func fetchCachedArtist(id: String) async throws -> Artist?
-
-    func fetchCachedArtistGenres(id: String) async throws -> (genres: [String], updatedAt: Date)?
 }

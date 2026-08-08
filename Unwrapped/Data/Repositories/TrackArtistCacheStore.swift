@@ -87,7 +87,6 @@ nonisolated enum TrackArtistCacheStore {
         Artist(
             id: artistModel.spotifyId,
             name: artistModel.name,
-            genres: artistModel.genres,
             popularity: artistModel.popularity,
             imageURL: artistModel.imageURL
         )

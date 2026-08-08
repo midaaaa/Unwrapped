@@ -10,7 +10,6 @@ import Foundation
 struct Artist: Sendable, Equatable, Identifiable {
     let id: String
     let name: String
-    let genres: [String]
     let popularity: Int
     let imageURL: URL?
 }

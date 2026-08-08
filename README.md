@@ -27,7 +27,7 @@ Every entry you've ever logged lives in a diary you can actually browse — not 
 
 <img src="docs/media/3%20Diary%20Sort%20Filter%20Menu.png" width="280" alt="Diary browse/sort menu, grouped by track and sorted oldest first" />
 
-And then there's Stats. Recap is the part that pulls it all together: a grid of cards that update week to week or month to month — your biggest mover, a new favorite artist, the mood that defined the week, how your logging streak is holding up. Underneath that, a deeper layer for when you want to dig in: genre breakdowns, how your Spotify top tracks compare to what you actually bothered to log, a heatmap of when you listen, discovery and replay patterns.
+And then there's Stats. Recap is the part that pulls it all together: a grid of cards that update week to week or month to month — your biggest mover, a new favorite artist, the mood that defined the week, how your logging streak is holding up. Underneath that, a deeper layer for when you want to dig in: how your Spotify top tracks compare to what you actually bothered to log, a heatmap of when you listen, discovery and replay patterns.
 
 <table>
 <tr>

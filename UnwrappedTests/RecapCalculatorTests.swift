@@ -48,8 +48,10 @@ final class RecapCalculatorTests: XCTestCase {
 
     func test_state_belowMinEntries_returnsInsufficientDataWithCountNeeded() {
         let now = Date()
-        let entries = [entry(loggedAt: now), entry(loggedAt: now)]
-        let backdatedNow = calendar.date(byAdding: .day, value: 4, to: now)!
+        let weekStart = calendar.dateInterval(of: .weekOfYear, for: now)!.start
+        let entries = [entry(loggedAt: weekStart), entry(loggedAt: weekStart)]
+        // Stay inside the same calendar week as weekStart so these entries still count as "current".
+        let backdatedNow = calendar.date(byAdding: .day, value: 4, to: weekStart)!
 
         let state = RecapCalculator.state(entries: entries, snapshots: [], period: .week, now: backdatedNow, calendar: calendar)
 

@@ -48,8 +48,6 @@ final class StatsViewModel {
         self.tasteRepository = tasteRepository
     }
 
-    private(set) var hasLoadedEntriesOnce = false
-
     func loadEntries() async {
         entriesErrorMessage = nil
         do {
@@ -57,7 +55,6 @@ final class StatsViewModel {
         } catch {
             entriesErrorMessage = error.localizedDescription
         }
-        hasLoadedEntriesOnce = true
     }
 
     func loadRecapSnapshots() async {
@@ -211,124 +208,6 @@ final class StatsViewModel {
         }
     }
 
-    struct GenreCount: Identifiable {
-        let genre: String
-        let count: Int
-        var id: String { genre }
-    }
-
-    private(set) var genreBreakdownIsLoading = false
-    private var artistGenresCache: [String: [String]] = [:]
-    private var genreFetchRetryDates: [String: Date] = [:]
-    private var genreBreakdownInFlight: Task<Void, Never>?
-
-    private static let genreStalenessInterval: TimeInterval = 14 * 24 * 60 * 60
-    private static let genreFetchSpacingNanoseconds: UInt64 = 150_000_000
-    private static let genreFetchRetryBackoff: TimeInterval = 5 * 60
-
-    enum GenreSectionStatus {
-        case loading
-        case pending
-        case empty
-        case loaded
-    }
-
-    var genreSectionStatus: GenreSectionStatus {
-        if genreBreakdownIsLoading { return .loading }
-        if !genreCounts.isEmpty { return .loaded }
-        guard hasLoadedEntriesOnce else { return .pending }
-        if hasUnresolvedArtistData { return .pending }
-        return .empty
-    }
-
-    private var hasUnresolvedArtistData: Bool {
-        let hasUnresolvedRelationship = periodEntries.contains { entry in
-            guard let track = entry.track else { return false }
-            return track.artistIds.isEmpty && !track.artistNames.isEmpty
-        }
-        guard !hasUnresolvedRelationship else { return true }
-
-        let artistIds = Set(periodEntries.compactMap(\.track).flatMap(\.artistIds))
-        return artistIds.contains { artistGenresCache[$0] == nil }
-    }
-
-    func loadGenreBreakdown() async {
-        if let inFlight = genreBreakdownInFlight {
-            await inFlight.value
-            return
-        }
-        let task = Task { await performGenreBreakdownLoad() }
-        genreBreakdownInFlight = task
-        await task.value
-        genreBreakdownInFlight = nil
-    }
-
-    private func performGenreBreakdownLoad() async {
-        let artistIds = Set(periodEntries.compactMap(\.track).flatMap(\.artistIds))
-        let unresolvedIds = artistIds.filter { id in
-            guard artistGenresCache[id] == nil else { return false }
-            guard let retryDate = genreFetchRetryDates[id] else { return true }
-            return Date() >= retryDate
-        }
-        guard !unresolvedIds.isEmpty else { return }
-
-        var idsNeedingFetch: [String] = []
-        for artistId in unresolvedIds {
-            guard let cached = try? await tasteRepository.fetchCachedArtistGenres(id: artistId) else {
-                idsNeedingFetch.append(artistId)
-                continue
-            }
-            let isStale = Date().timeIntervalSince(cached.updatedAt) > Self.genreStalenessInterval
-            if cached.genres.isEmpty || isStale {
-                idsNeedingFetch.append(artistId)
-            } else {
-                artistGenresCache[artistId] = cached.genres
-            }
-        }
-        guard !idsNeedingFetch.isEmpty else { return }
-
-        genreBreakdownIsLoading = true
-        defer { genreBreakdownIsLoading = false }
-
-        for artistId in idsNeedingFetch {
-            do {
-                let fetched = try await spotifyRepository.fetchArtist(id: artistId)
-                _ = try? await tasteRepository.upsertArtist(fetched)
-                artistGenresCache[artistId] = fetched.genres
-                genreFetchRetryDates[artistId] = nil
-            } catch APIError.rateLimited(let retryAfter) {
-                let delay = retryAfter ?? Self.genreFetchRetryBackoff
-                for remainingId in idsNeedingFetch where artistGenresCache[remainingId] == nil {
-                    genreFetchRetryDates[remainingId] = Date().addingTimeInterval(delay)
-                }
-                break
-            } catch {
-                genreFetchRetryDates[artistId] = Date().addingTimeInterval(Self.genreFetchRetryBackoff)
-            }
-            try? await Task.sleep(nanoseconds: Self.genreFetchSpacingNanoseconds)
-        }
-    }
-
-    var genreCounts: [GenreCount] {
-        var counts: [String: Int] = [:]
-        for entry in periodEntries {
-            guard let track = entry.track else { continue }
-            let genresForEntry = Set(track.artistGroupingKeys.flatMap { artistGenresCache[$0.id] ?? [] })
-            for genre in genresForEntry {
-                counts[genre, default: 0] += 1
-            }
-        }
-        let sorted = counts.map { GenreCount(genre: $0.key, count: $0.value) }.sorted { lhs, rhs in
-            guard lhs.count == rhs.count else { return lhs.count > rhs.count }
-            return lhs.genre < rhs.genre
-        }
-        return Array(sorted.prefix(8))
-    }
-
-    var genreAxisTickValues: [Int] {
-        axisTickValues(forMax: genreCounts.map(\.count).max() ?? 0)
-    }
-
     var currentStreak: Int {
         StreakCalculator.currentStreak(loggedDates: entries.map(\.loggedAt))
     }
@@ -371,21 +250,6 @@ final class StatsViewModel {
         }
         guard let topGroup = sorted.first, topGroup.count > 1, let track = topGroup.first else { return nil }
         return ReplayedTrack(track: track, count: topGroup.count)
-    }
-
-    var topGenreMood: (genre: String, mood: MoodTag)? {
-        guard let topGenre = genreCounts.first?.genre else { return nil }
-        let taggedEntries = periodEntries.filter { entry in
-            guard let track = entry.track else { return false }
-            return track.artistGroupingKeys.contains { artistGenresCache[$0.id]?.contains(topGenre) == true }
-        }
-        let tagCounts = Dictionary(grouping: taggedEntries.flatMap(\.tags)) { $0 }.mapValues(\.count)
-        let sorted = tagCounts.sorted { lhs, rhs in
-            guard lhs.value == rhs.value else { return lhs.value > rhs.value }
-            return lhs.key.label < rhs.key.label
-        }
-        guard let topMood = sorted.first?.key else { return nil }
-        return (topGenre, topMood)
     }
 
     var topArtistMismatch: (spotifyTop: Artist, diaryTopName: String, diaryTopCount: Int)? {

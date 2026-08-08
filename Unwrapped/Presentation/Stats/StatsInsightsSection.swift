@@ -22,7 +22,6 @@ struct StatsInsightsSection: View {
                 streakRow
                 discoveryRow
                 replayedRow
-                topGenreMoodRow
                 mismatchRow
                 ForEach(viewModel.engagementMoodBreakdown) { engagementRow($0) }
             }
@@ -33,7 +32,6 @@ struct StatsInsightsSection: View {
         viewModel.currentStreak > 0
             || viewModel.discoveryRate != nil
             || viewModel.mostReplayedTrack != nil
-            || viewModel.topGenreMood != nil
             || viewModel.topArtistMismatch != nil
             || !viewModel.engagementMoodBreakdown.isEmpty
     }
@@ -95,19 +93,6 @@ struct StatsInsightsSection: View {
                 Spacer(minLength: 0)
             }
             .padding(.vertical, 2)
-        }
-    }
-
-    @ViewBuilder
-    private var topGenreMoodRow: some View {
-        if let topGenreMood = viewModel.topGenreMood {
-            insightRow(systemImage: "guitars.fill", tint: .orange) {
-                Text("\(topGenreMood.genre.capitalized) usually means \(topGenreMood.mood.label.lowercased())")
-                    .font(.subheadline.weight(.medium))
-                Text("\(topGenreMood.mood.emoji) Your top genre's usual mood")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
         }
     }
 

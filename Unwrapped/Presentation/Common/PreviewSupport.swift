@@ -29,7 +29,7 @@ struct PreviewSpotifyRepository: SpotifyRepositoryProtocol {
         return topArtists
     }
     func fetchArtist(id: String) async throws -> Artist {
-        Artist(id: id, name: "Preview Artist", genres: [], popularity: 0, imageURL: nil)
+        Artist(id: id, name: "Preview Artist", popularity: 0, imageURL: nil)
     }
     func searchTracks(query: String, limit: Int, offset: Int) async throws -> [Track] { [] }
     func fetchProfile() async throws -> UserProfile { profile }
@@ -49,7 +49,7 @@ struct PreviewLoadingSpotifyRepository: SpotifyRepositoryProtocol {
     func fetchTopTracks(timeRange: TopItemsTimeRange, limit: Int) async throws -> [Track] { [] }
     func fetchTopArtists(timeRange: TopItemsTimeRange, limit: Int) async throws -> [Artist] { [] }
     func fetchArtist(id: String) async throws -> Artist {
-        Artist(id: id, name: "Preview Artist", genres: [], popularity: 0, imageURL: nil)
+        Artist(id: id, name: "Preview Artist", popularity: 0, imageURL: nil)
     }
     func searchTracks(query: String, limit: Int, offset: Int) async throws -> [Track] { [] }
     func fetchProfile() async throws -> UserProfile {
@@ -134,10 +134,6 @@ actor PreviewTasteRepository: TasteRepositoryProtocol {
     }
 
     func fetchCachedArtist(id: String) async throws -> Artist? { artists[id] }
-
-    func fetchCachedArtistGenres(id: String) async throws -> (genres: [String], updatedAt: Date)? {
-        artists[id].map { ($0.genres, Date()) }
-    }
 }
 
 struct PreviewSpotifyAuthService: SpotifyAuthServiceProtocol {
@@ -175,7 +171,6 @@ extension Artist {
     nonisolated static let preview = Artist(
         id: "preview-artist",
         name: "Preview Artist",
-        genres: ["indie pop", "dream pop"],
         popularity: 72,
         imageURL: nil
     )
@@ -251,7 +246,7 @@ extension Track {
 
 extension Artist {
     nonisolated static let previewStatsList: [Artist] = previewStatsTrackPool.enumerated().map { index, entry in
-        Artist(id: "preview-artist-\(entry.artist)", name: entry.artist, genres: ["indie", "pop"], popularity: 90 - index * 5, imageURL: nil)
+        Artist(id: "preview-artist-\(entry.artist)", name: entry.artist, popularity: 90 - index * 5, imageURL: nil)
     }
 }
 

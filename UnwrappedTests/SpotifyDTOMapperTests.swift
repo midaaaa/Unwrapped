@@ -55,13 +55,12 @@ final class SpotifyDTOMapperTests: XCTestCase {
 
     func test_mapTopArtist_defaultsMissingOptionalFields() {
         let json = """
-        {"id": "artist1", "name": "Artist", "genres": null, "popularity": null, "images": null}
+        {"id": "artist1", "name": "Artist", "popularity": null, "images": null}
         """
         let dto = try! JSONDecoder().decode(TopArtistDTO.self, from: Data(json.utf8))
         let artist = SpotifyDTOMapper.map(dto)
 
         XCTAssertEqual(artist.id, "artist1")
-        XCTAssertEqual(artist.genres, [])
         XCTAssertEqual(artist.popularity, 0)
         XCTAssertNil(artist.imageURL)
     }

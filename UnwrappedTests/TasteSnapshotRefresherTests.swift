@@ -15,7 +15,7 @@ final class TasteSnapshotRefresherTests: XCTestCase {
     }
 
     private func artist(id: String, name: String) -> Artist {
-        Artist(id: id, name: name, genres: [], popularity: 0, imageURL: nil)
+        Artist(id: id, name: name, popularity: 0, imageURL: nil)
     }
 
     func test_save_assignsOneBasedRanksInInputOrder() async throws {

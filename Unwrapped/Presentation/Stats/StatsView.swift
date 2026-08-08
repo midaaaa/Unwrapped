@@ -45,7 +45,6 @@ struct StatsView: View {
                 StatsMoodSection(viewModel: viewModel)
                 StatsActivitySection(viewModel: viewModel)
                 StatsHeatmapSection(viewModel: viewModel)
-                StatsGenreSection(viewModel: viewModel)
                 topTracksSection
                 topArtistsSection
             }
@@ -59,12 +58,10 @@ struct StatsView: View {
             .task {
                 await viewModel.loadEntries()
                 revealSummaryCounts()
-                await viewModel.loadGenreBreakdown()
             }
             .task(id: viewModel.timeRange) {
                 await viewModel.loadTopItems()
                 revealSummaryCounts()
-                await viewModel.loadGenreBreakdown()
             }
             .task {
                 await viewModel.loadRecapSnapshots()
@@ -74,12 +71,10 @@ struct StatsView: View {
                 await viewModel.loadEntries()
                 await viewModel.loadTopItems()
                 await viewModel.loadRecapSnapshots()
-                await viewModel.loadGenreBreakdown()
                 revealSummaryCounts()
             }
             .onChange(of: viewModel.entries) { _, _ in
                 revealSummaryCounts()
-                Task { await viewModel.loadGenreBreakdown() }
             }
             .navigationDestination(item: $scopedTarget) { target in
                 DiaryScopedEntriesView(

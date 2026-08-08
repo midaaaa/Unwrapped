@@ -30,7 +30,7 @@ final class StatsViewModelTests: XCTestCase {
     }
 
     private func artist(id: String, name: String = "Artist") -> Artist {
-        Artist(id: id, name: name, genres: [], popularity: 0, imageURL: nil)
+        Artist(id: id, name: name, popularity: 0, imageURL: nil)
     }
 
     private func entry(
@@ -275,62 +275,4 @@ final class StatsViewModelTests: XCTestCase {
         XCTAssertEqual(vm.moodAxisTickValues, [0, 2, 4])
     }
 
-    // MARK: - Genre breakdown
-
-    func test_genreCounts_afterLoadingBreakdown_countsEntriesPerGenre() async {
-        let now = Date()
-        let rockTrack = track(id: "t1", artistId: "rock-artist")
-        let jazzTrack = track(id: "t2", artistId: "jazz-artist")
-        let vm = makeViewModel(entries: [
-            entry(loggedAt: now, track: rockTrack),
-            entry(loggedAt: now, track: rockTrack),
-            entry(loggedAt: now, track: jazzTrack),
-        ])
-
-        let spotify = FakeSpotifyRepository()
-        spotify.artistsById = [
-            "rock-artist": artist(id: "rock-artist", name: "Rock Artist"),
-            "jazz-artist": artist(id: "jazz-artist", name: "Jazz Artist"),
-        ]
-        spotify.artistsById["rock-artist"] = Artist(id: "rock-artist", name: "Rock Artist", genres: ["rock"], popularity: 0, imageURL: nil)
-        spotify.artistsById["jazz-artist"] = Artist(id: "jazz-artist", name: "Jazz Artist", genres: ["jazz"], popularity: 0, imageURL: nil)
-
-        let vmWithFakes = StatsViewModel(
-            diaryRepository: FakeDiaryRepository(),
-            spotifyRepository: spotify,
-            tasteRepository: FakeTasteRepository()
-        )
-        vmWithFakes.entries = vm.entries
-
-        await vmWithFakes.loadGenreBreakdown()
-
-        let counts = Dictionary(uniqueKeysWithValues: vmWithFakes.genreCounts.map { ($0.genre, $0.count) })
-        XCTAssertEqual(counts["rock"], 2)
-        XCTAssertEqual(counts["jazz"], 1)
-    }
-
-    func test_topGenreMood_afterLoadingBreakdown_picksDominantMoodForTopGenre() async {
-        let now = Date()
-        let rockTrack = track(id: "t1", artistId: "rock-artist")
-        let vm = StatsViewModel(
-            diaryRepository: FakeDiaryRepository(),
-            spotifyRepository: {
-                let spotify = FakeSpotifyRepository()
-                spotify.artistsById = ["rock-artist": Artist(id: "rock-artist", name: "Rock Artist", genres: ["rock"], popularity: 0, imageURL: nil)]
-                return spotify
-            }(),
-            tasteRepository: FakeTasteRepository()
-        )
-        vm.entries = [
-            entry(loggedAt: now, track: rockTrack, tags: [.energetic]),
-            entry(loggedAt: now, track: rockTrack, tags: [.energetic]),
-            entry(loggedAt: now, track: rockTrack, tags: [.calm]),
-        ]
-
-        await vm.loadGenreBreakdown()
-
-        let result = vm.topGenreMood
-        XCTAssertEqual(result?.genre, "rock")
-        XCTAssertEqual(result?.mood, .energetic)
-    }
 }

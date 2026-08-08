@@ -27,17 +27,9 @@ struct StatsArtistRow: View {
                 }
                 .clipShape(Circle())
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(artist.name)
-                        .font(.subheadline.weight(.medium))
-                        .lineLimit(1)
-                    if let genre = artist.genres.first {
-                        Text(genre.capitalized)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                }
+                Text(artist.name)
+                    .font(.subheadline.weight(.medium))
+                    .lineLimit(1)
 
                 Spacer(minLength: 0)
             }

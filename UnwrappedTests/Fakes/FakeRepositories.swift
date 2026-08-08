@@ -39,7 +39,7 @@ final class FakeSpotifyRepository: SpotifyRepositoryProtocol, @unchecked Sendabl
     func fetchTopTracks(timeRange: TopItemsTimeRange, limit: Int) async throws -> [Track] { topTracksToReturn }
     func fetchTopArtists(timeRange: TopItemsTimeRange, limit: Int) async throws -> [Artist] { topArtistsToReturn }
     func fetchArtist(id: String) async throws -> Artist {
-        artistsById[id] ?? Artist(id: id, name: "Artist", genres: [], popularity: 0, imageURL: nil)
+        artistsById[id] ?? Artist(id: id, name: "Artist", popularity: 0, imageURL: nil)
     }
     func searchTracks(query: String, limit: Int, offset: Int) async throws -> [Track] { [] }
     func fetchProfile() async throws -> UserProfile { UserProfile(id: "u", displayName: "User", country: nil, product: .unknown, imageURL: nil) }
@@ -61,5 +61,4 @@ final class FakeTasteRepository: TasteRepositoryProtocol, @unchecked Sendable {
     func clearOrphanedCache() async throws {}
     func upsertArtist(_ artist: Artist) async throws -> Artist { artist }
     func fetchCachedArtist(id: String) async throws -> Artist? { nil }
-    func fetchCachedArtistGenres(id: String) async throws -> (genres: [String], updatedAt: Date)? { nil }
 }

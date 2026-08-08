@@ -47,10 +47,12 @@ final class DiaryViewModelTests: XCTestCase {
     private func makeViewModel(entries: [DiaryEntry]) -> DiaryViewModel {
         let repo = FakeDiaryRepository()
         repo.entriesToReturn = entries
+        let isolatedDefaults = UserDefaults(suiteName: "DiaryViewModelTests-\(UUID().uuidString)")!
         let vm = DiaryViewModel(
             diaryRepository: repo,
             spotifyRepository: FakeSpotifyRepository(),
-            tasteRepository: FakeTasteRepository()
+            tasteRepository: FakeTasteRepository(),
+            userDefaults: isolatedDefaults
         )
         vm.entries = entries
         return vm

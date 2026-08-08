@@ -35,7 +35,7 @@ struct OnboardingView: View {
         OnboardingFeature(
             systemImage: "chart.bar.xaxis",
             title: "Discover your patterns",
-            description: "Moods, genres, streaks, and how your taste changes over time — all in one Stats tab."
+            description: "Moods, streaks, and how your taste changes over time — all in one Stats tab."
         )
     ]
 

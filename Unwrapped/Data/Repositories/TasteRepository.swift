@@ -120,12 +120,6 @@ actor TasteRepository: TasteRepositoryProtocol {
         return try modelContext.fetch(descriptor).first.map(TrackArtistCacheStore.mapArtist)
     }
 
-    func fetchCachedArtistGenres(id: String) async throws -> (genres: [String], updatedAt: Date)? {
-        let descriptor = FetchDescriptor<ArtistCacheModel>(predicate: #Predicate { $0.spotifyId == id })
-        guard let model = try modelContext.fetch(descriptor).first else { return nil }
-        return (model.genres, model.genresUpdatedAt ?? .distantPast)
-    }
-
     private func upsertArtistModel(_ artist: Artist) throws -> ArtistCacheModel {
         let artistId = artist.id
         let descriptor = FetchDescriptor<ArtistCacheModel>(
@@ -134,8 +128,6 @@ actor TasteRepository: TasteRepositoryProtocol {
 
         if let existing = try modelContext.fetch(descriptor).first {
             existing.name = artist.name
-            existing.genres = artist.genres
-            existing.genresUpdatedAt = .now
             existing.popularity = artist.popularity
             existing.imageURL = artist.imageURL
             return existing
@@ -144,8 +136,6 @@ actor TasteRepository: TasteRepositoryProtocol {
         let new = ArtistCacheModel(
             spotifyId: artist.id,
             name: artist.name,
-            genres: artist.genres,
-            genresUpdatedAt: .now,
             popularity: artist.popularity,
             imageURL: artist.imageURL
         )

@@ -26,7 +26,6 @@ nonisolated enum SpotifyDTOMapper {
         Artist(
             id: dto.id,
             name: dto.name,
-            genres: dto.genres ?? [],
             popularity: dto.popularity ?? 0,
             imageURL: Mapping.imageURL(dto.images?.first?.url)
         )
