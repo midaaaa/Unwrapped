@@ -95,6 +95,8 @@ struct DiaryView: View {
             }
         } label: {
             Image(systemName: viewModel.browseMode.systemImage)
+                .font(.body)
+                .padding(.trailing, -6)
         }
         .menuIndicator(.hidden)
     }
@@ -133,9 +135,26 @@ struct DiaryView: View {
                 }
             }
         } label: {
-            Image(systemName: viewModel.filter.isActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease")
+            filterMenuIcon
         }
         .menuIndicator(.hidden)
+    }
+
+    private var filterMenuIcon: some View {
+        let filter = viewModel.filter
+        let showsBackground = filter.isSingleKindOnly || !filter.moodTags.isEmpty || filter.dateRange != nil
+        let systemImage = filter.isSingleKindOnly ? filter.kinds.first!.systemImage : "line.3.horizontal.decrease"
+
+        return Image(systemName: systemImage)
+            .font(.body)
+            .foregroundStyle(showsBackground ? .white : Color.primary)
+            .frame(width: 36, height: 36)
+            .background {
+                if showsBackground {
+                    Circle().fill(Color.accentColor)
+                }
+            }
+            .padding(.trailing, -6)
     }
 
     private func kindBinding(_ kind: EngagementLevel) -> Binding<Bool> {

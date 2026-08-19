@@ -49,7 +49,6 @@ struct DiaryDateRangeFilterSheet: View {
                         dateRange = nil
                         dismiss()
                     }
-                    .disabled(dateRange == nil)
                 }
             }
         }
