@@ -73,7 +73,7 @@ final class StatsViewModelTests: XCTestCase {
         let vm = makeViewModel(entries: [recent, old])
         vm.timeRange = .shortTerm
 
-        XCTAssertEqual(vm.periodEntries.map(\.id), [recent.id])
+        XCTAssertEqual(vm.derived.periodEntries.map(\.id), [recent.id])
     }
 
     func test_periodEntries_longTerm_includesEverything() {
@@ -81,7 +81,7 @@ final class StatsViewModelTests: XCTestCase {
         let vm = makeViewModel(entries: [old])
         vm.timeRange = .longTerm
 
-        XCTAssertEqual(vm.periodEntries.map(\.id), [old.id])
+        XCTAssertEqual(vm.derived.periodEntries.map(\.id), [old.id])
     }
 
     // MARK: - Mood distribution
@@ -93,7 +93,7 @@ final class StatsViewModelTests: XCTestCase {
         for _ in 0..<5 { entries.append(entry(loggedAt: now, tags: [.sad])) }
         let vm = makeViewModel(entries: entries)
 
-        let counts = vm.moodCounts
+        let counts = vm.derived.moodCounts
         XCTAssertEqual(counts.map(\.tag), [.sad, .happy])
         XCTAssertEqual(counts.map(\.count), [5, 3])
     }
@@ -103,21 +103,21 @@ final class StatsViewModelTests: XCTestCase {
     func test_activityBucketComponent_shortSpan_usesDay() {
         let now = Date()
         let vm = makeViewModel(entries: [entry(loggedAt: now), entry(loggedAt: daysAgo(5, from: now))])
-        XCTAssertEqual(vm.activityBucketComponent, .day)
+        XCTAssertEqual(vm.derived.activityBucketComponent, .day)
     }
 
     func test_activityBucketComponent_mediumSpan_usesWeek() {
         let now = Date()
         let vm = makeViewModel(entries: [entry(loggedAt: now), entry(loggedAt: daysAgo(60, from: now))])
         vm.timeRange = .longTerm
-        XCTAssertEqual(vm.activityBucketComponent, .weekOfYear)
+        XCTAssertEqual(vm.derived.activityBucketComponent, .weekOfYear)
     }
 
     func test_activityBucketComponent_longSpan_usesMonth() {
         let now = Date()
         let vm = makeViewModel(entries: [entry(loggedAt: now), entry(loggedAt: daysAgo(300, from: now))])
         vm.timeRange = .longTerm
-        XCTAssertEqual(vm.activityBucketComponent, .month)
+        XCTAssertEqual(vm.derived.activityBucketComponent, .month)
     }
 
     func test_activityBuckets_groupsEntriesIntoSameDayBucket() {
@@ -125,15 +125,15 @@ final class StatsViewModelTests: XCTestCase {
         let sameDayLater = calendar.date(byAdding: .hour, value: 3, to: now)!
         let vm = makeViewModel(entries: [entry(loggedAt: now), entry(loggedAt: sameDayLater)])
 
-        XCTAssertEqual(vm.activityBuckets.count, 1)
-        XCTAssertEqual(vm.activityBuckets.first?.count, 2)
+        XCTAssertEqual(vm.derived.activityBuckets.count, 1)
+        XCTAssertEqual(vm.derived.activityBuckets.first?.count, 2)
     }
 
     func test_activityBucketMatching_findsBucketContainingTappedDate() {
         let now = Date()
         let vm = makeViewModel(entries: [entry(loggedAt: now)])
 
-        let bucket = vm.activityBucket(matching: now)
+        let bucket = vm.derived.activityBucket(matching: now)
 
         XCTAssertNotNil(bucket)
         XCTAssertEqual(bucket?.count, 1)
@@ -143,7 +143,7 @@ final class StatsViewModelTests: XCTestCase {
         let now = Date()
         let vm = makeViewModel(entries: [entry(loggedAt: now)])
 
-        XCTAssertNil(vm.activityBucket(matching: daysAgo(100, from: now)))
+        XCTAssertNil(vm.derived.activityBucket(matching: daysAgo(100, from: now)))
     }
 
     // MARK: - Discovery rate
@@ -156,12 +156,12 @@ final class StatsViewModelTests: XCTestCase {
         let vm = makeViewModel(entries: [establishedArtistOldEntry, establishedArtistRecentEntry, newArtistEntry])
         vm.timeRange = .shortTerm
 
-        XCTAssertEqual(vm.discoveryRate, 0.5)
+        XCTAssertEqual(vm.derived.discoveryRate, 0.5)
     }
 
     func test_discoveryRate_noArtistsInPeriod_returnsNil() {
         let vm = makeViewModel(entries: [])
-        XCTAssertNil(vm.discoveryRate)
+        XCTAssertNil(vm.derived.discoveryRate)
     }
 
     // MARK: - Most replayed track
@@ -175,8 +175,8 @@ final class StatsViewModelTests: XCTestCase {
             entry(loggedAt: now, track: track(id: "t2", name: "Once")),
         ])
 
-        XCTAssertEqual(vm.mostReplayedTrack?.track.id, "t1")
-        XCTAssertEqual(vm.mostReplayedTrack?.count, 2)
+        XCTAssertEqual(vm.derived.mostReplayedTrack?.track.id, "t1")
+        XCTAssertEqual(vm.derived.mostReplayedTrack?.count, 2)
     }
 
     func test_mostReplayedTrack_allTracksLoggedOnce_returnsNil() {
@@ -186,7 +186,7 @@ final class StatsViewModelTests: XCTestCase {
             entry(loggedAt: now, track: track(id: "t2")),
         ])
 
-        XCTAssertNil(vm.mostReplayedTrack)
+        XCTAssertNil(vm.derived.mostReplayedTrack)
     }
 
     // MARK: - Top artist mismatch
@@ -203,7 +203,7 @@ final class StatsViewModelTests: XCTestCase {
             topArtists: [spotifyTop]
         )
 
-        let mismatch = vm.topArtistMismatch
+        let mismatch = vm.derived.topArtistMismatch
         XCTAssertEqual(mismatch?.spotifyTop.id, "spotify-fav")
         XCTAssertEqual(mismatch?.diaryTopName, "Diary Favorite")
         XCTAssertEqual(mismatch?.diaryTopCount, 2)
@@ -217,7 +217,7 @@ final class StatsViewModelTests: XCTestCase {
             topArtists: [artist(id: "shared", name: "Shared")]
         )
 
-        XCTAssertNil(vm.topArtistMismatch)
+        XCTAssertNil(vm.derived.topArtistMismatch)
     }
 
     // MARK: - Engagement breakdown
@@ -229,7 +229,7 @@ final class StatsViewModelTests: XCTestCase {
             entry(loggedAt: now, engagementLevel: .quickTap),
         ])
 
-        let breakdown = vm.engagementMoodBreakdown
+        let breakdown = vm.derived.engagementMoodBreakdown
         XCTAssertEqual(breakdown.map(\.level), [.quickTap])
         XCTAssertEqual(breakdown.first?.count, 2)
     }
@@ -238,23 +238,18 @@ final class StatsViewModelTests: XCTestCase {
 
     func test_activityHeatmap_alwaysReturnsFullSevenByBlockGrid() {
         let vm = makeViewModel(entries: [])
-        XCTAssertEqual(vm.activityHeatmap.count, 7 * (24 / StatsViewModel.heatmapHourBlockSize))
-        XCTAssertEqual(vm.heatmapMaxCount, 0)
+        XCTAssertEqual(vm.derived.activityHeatmap.count, 7 * (24 / StatsCalculator.heatmapHourBlockSize))
+        XCTAssertEqual(vm.derived.heatmapMaxCount, 0)
     }
 
     func test_activityHeatmap_bucketsEntryByWeekdayAndHourBlock() {
-        var components = DateComponents()
-        components.year = 2026
-        components.month = 8
-        components.day = 3 // a Monday
-        components.hour = 10
-        let date = calendar.date(from: components)!
+        let date = calendar.date(bySettingHour: 10, minute: 0, second: 0, of: daysAgo(7))!
         let vm = makeViewModel(entries: [entry(loggedAt: date, playedAt: date)])
 
-        XCTAssertEqual(vm.heatmapMaxCount, 1)
+        XCTAssertEqual(vm.derived.heatmapMaxCount, 1)
         let weekday = calendar.component(.weekday, from: date)
-        let expectedBlockStart = (10 / StatsViewModel.heatmapHourBlockSize) * StatsViewModel.heatmapHourBlockSize
-        let cell = vm.activityHeatmap.first { $0.weekday == weekday && $0.hourBlockStart == expectedBlockStart }
+        let expectedBlockStart = (10 / StatsCalculator.heatmapHourBlockSize) * StatsCalculator.heatmapHourBlockSize
+        let cell = vm.derived.activityHeatmap.first { $0.weekday == weekday && $0.hourBlockStart == expectedBlockStart }
         XCTAssertEqual(cell?.count, 1)
     }
 
@@ -262,7 +257,7 @@ final class StatsViewModelTests: XCTestCase {
 
     func test_moodAxisTickValues_noEntries_returnsZeroOnly() {
         let vm = makeViewModel(entries: [])
-        XCTAssertEqual(vm.moodAxisTickValues, [0])
+        XCTAssertEqual(vm.derived.moodAxisTickValues, [0])
     }
 
     func test_moodAxisTickValues_roundsStepToNiceNumber() {
@@ -272,7 +267,7 @@ final class StatsViewModelTests: XCTestCase {
         let vm = makeViewModel(entries: entries)
 
         // max = 5 -> rawStep 1.25 -> nice step 2 -> [0, 2, 4]
-        XCTAssertEqual(vm.moodAxisTickValues, [0, 2, 4])
+        XCTAssertEqual(vm.derived.moodAxisTickValues, [0, 2, 4])
     }
 
 }

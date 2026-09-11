@@ -48,12 +48,24 @@ actor TasteRepository: TasteRepositoryProtocol {
     }
 
     func fetchSnapshots(from: Date, to: Date) async throws -> [TasteSnapshot] {
-        let descriptor = FetchDescriptor<TasteSnapshotModel>(
+        var descriptor = FetchDescriptor<TasteSnapshotModel>(
             predicate: #Predicate { from <= $0.date && $0.date <= to },
             sortBy: [SortDescriptor(\.date, order: .reverse)]
         )
+        descriptor.relationshipKeyPathsForPrefetching = [\.trackEntries, \.artistEntries]
 
         return try modelContext.fetch(descriptor).map(Self.mapToDomain)
+    }
+
+    func fetchLatestSnapshot(from: Date, to: Date) async throws -> TasteSnapshot? {
+        var descriptor = FetchDescriptor<TasteSnapshotModel>(
+            predicate: #Predicate { from <= $0.date && $0.date <= to },
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        descriptor.relationshipKeyPathsForPrefetching = [\.trackEntries, \.artistEntries]
+        descriptor.fetchLimit = 1
+
+        return try modelContext.fetch(descriptor).first.map(Self.mapToDomain)
     }
 
     func fetchLatestSnapshot() async throws -> TasteSnapshot? {

@@ -55,6 +55,7 @@ final class FakeTasteRepository: TasteRepositoryProtocol, @unchecked Sendable {
         return snapshot
     }
     func fetchSnapshots(from: Date, to: Date) async throws -> [TasteSnapshot] { [] }
+    func fetchLatestSnapshot(from: Date, to: Date) async throws -> TasteSnapshot? { nil }
     func fetchLatestSnapshot() async throws -> TasteSnapshot? { nil }
     func deleteSnapshot(id: UUID) async throws {}
     func deleteAllSnapshots() async throws {}

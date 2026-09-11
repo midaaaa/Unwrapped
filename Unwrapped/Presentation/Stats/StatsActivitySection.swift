@@ -12,19 +12,19 @@ struct StatsActivitySection: View {
     let viewModel: StatsViewModel
     @State private var selectedActivityDate: Date?
 
-    private var selectedBucket: StatsViewModel.ActivityBucket? {
-        viewModel.activityBucket(at: selectedActivityDate)
+    private var selectedBucket: StatsActivityBucket? {
+        viewModel.derived.activityBucket(at: selectedActivityDate)
     }
 
     private var activityAxisDateFormat: Date.FormatStyle {
-        viewModel.activityBucketComponent == .month
+        viewModel.derived.activityBucketComponent == .month
             ? .dateTime.month(.abbreviated).year()
             : .dateTime.day().month(.abbreviated)
     }
 
     var body: some View {
         Section("Activity") {
-            if viewModel.activityBuckets.isEmpty {
+            if viewModel.derived.activityBuckets.isEmpty {
                 EmptyStateRow(
                     title: "No activity yet",
                     systemImage: "calendar",
@@ -53,7 +53,7 @@ struct StatsActivitySection: View {
                 }
             } else {
                 HStack(spacing: 4) {
-                    Text("\(viewModel.totalEntryCount) entries")
+                    Text("\(viewModel.derived.totalEntryCount) entries")
                         .font(.caption.weight(.semibold))
                     Text("total")
                         .font(.caption)
@@ -65,18 +65,22 @@ struct StatsActivitySection: View {
     }
 
     private var chart: some View {
-        Chart {
-            ForEach(viewModel.activityBuckets) { bucket in
+        let buckets = viewModel.derived.activityBuckets
+        let component = viewModel.derived.activityBucketComponent
+        let selected = selectedBucket
+
+        return Chart {
+            ForEach(buckets) { bucket in
                 BarMark(
-                    x: .value("Date", bucket.date, unit: viewModel.activityBucketComponent),
+                    x: .value("Date", bucket.date, unit: component),
                     y: .value("Entries", bucket.count)
                 )
                 .foregroundStyle(Color.accentColor.gradient)
                 .cornerRadius(6)
-                .opacity(selectedBucket == nil || selectedBucket?.id == bucket.id ? 1 : 0.35)
+                .opacity(selected == nil || selected?.id == bucket.id ? 1 : 0.35)
             }
-            if let selectedBucket {
-                RuleMark(x: .value("Date", selectedBucket.date, unit: viewModel.activityBucketComponent))
+            if let selected {
+                RuleMark(x: .value("Date", selected.date, unit: component))
                     .foregroundStyle(.secondary.opacity(0.3))
             }
         }
@@ -92,8 +96,8 @@ struct StatsActivitySection: View {
                                 let plotFrame = geometry[plotAnchor]
                                 let xPosition = value.location.x - plotFrame.origin.x
                                 guard let tappedDate: Date = proxy.value(atX: xPosition) else { return }
-                                let matched = viewModel.activityBucket(matching: tappedDate)
-                                selectedActivityDate = (matched?.id == selectedBucket?.id) ? nil : matched?.date
+                                let matched = viewModel.derived.activityBucket(matching: tappedDate)
+                                selectedActivityDate = (matched?.id == selected?.id) ? nil : matched?.date
                             }
                     )
             }
@@ -105,7 +109,7 @@ struct StatsActivitySection: View {
             }
         }
         .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: min(viewModel.activityBuckets.count, 4))) {
+            AxisMarks(values: .automatic(desiredCount: min(buckets.count, 4))) {
                 AxisTick()
             }
         }

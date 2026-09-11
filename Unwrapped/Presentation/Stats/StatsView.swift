@@ -20,9 +20,9 @@ struct StatsView: View {
     @State private var revealedArtistCount = 0
 
     private func revealSummaryCounts() {
-        revealedEntryCount = viewModel.totalEntryCount
-        revealedTrackCount = viewModel.distinctTrackCount
-        revealedArtistCount = viewModel.distinctArtistCount
+        revealedEntryCount = viewModel.derived.totalEntryCount
+        revealedTrackCount = viewModel.derived.distinctTrackCount
+        revealedArtistCount = viewModel.derived.distinctArtistCount
     }
 
     private func resetSummaryCounts() {
@@ -57,23 +57,19 @@ struct StatsView: View {
             }
             .task {
                 await viewModel.loadEntries()
+                await viewModel.loadRecapSnapshots()
                 revealSummaryCounts()
             }
             .task(id: viewModel.timeRange) {
-                await viewModel.loadTopItems()
+                await viewModel.loadTopItemsIfNeeded()
                 revealSummaryCounts()
-            }
-            .task {
-                await viewModel.loadRecapSnapshots()
             }
             .refreshable {
                 resetSummaryCounts()
-                await viewModel.loadEntries()
-                await viewModel.loadTopItems()
-                await viewModel.loadRecapSnapshots()
+                await viewModel.refreshAll()
                 revealSummaryCounts()
             }
-            .onChange(of: viewModel.entries) { _, _ in
+            .onChange(of: viewModel.derivedRevision) { _, _ in
                 revealSummaryCounts()
             }
             .navigationDestination(item: $scopedTarget) { target in
@@ -100,11 +96,11 @@ struct StatsView: View {
 
     private var summaryTiles: some View {
         HStack(spacing: 0) {
-            StatTile(value: revealedEntryCount, noun: "\(viewModel.totalEntryCount) entries")
+            StatTile(value: revealedEntryCount, noun: "\(viewModel.derived.totalEntryCount) entries")
             Divider()
-            StatTile(value: revealedTrackCount, noun: "\(viewModel.distinctTrackCount) tracks")
+            StatTile(value: revealedTrackCount, noun: "\(viewModel.derived.distinctTrackCount) tracks")
             Divider()
-            StatTile(value: revealedArtistCount, noun: "\(viewModel.distinctArtistCount) artists")
+            StatTile(value: revealedArtistCount, noun: "\(viewModel.derived.distinctArtistCount) artists")
         }
     }
 

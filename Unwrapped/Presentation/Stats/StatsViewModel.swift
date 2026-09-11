@@ -20,19 +20,26 @@ extension TopItemsTimeRange {
 @MainActor
 @Observable
 final class StatsViewModel {
-    var timeRange: TopItemsTimeRange = .shortTerm
+    var timeRange: TopItemsTimeRange = .shortTerm { didSet { recomputeDerived() } }
 
     var topTracks: [Track] = []
-    var topArtists: [Artist] = []
-    var entries: [DiaryEntry] = []
+    var topArtists: [Artist] = [] { didSet { recomputeDerived() } }
+    var entries: [DiaryEntry] = [] { didSet { recomputeAll() } }
 
-    var recapPeriod: RecapPeriod = .week
-    private(set) var recapSnapshots: [TasteSnapshot] = []
+    var recapPeriod: RecapPeriod = .week { didSet { recomputeRecapState() } }
+    private(set) var recapSnapshots: [TasteSnapshot] = [] { didSet { recomputeRecapState() } }
+
+    private(set) var derived = StatsDerived.empty
+    private(set) var recapState = RecapState.insufficientData(entriesNeeded: 0, daysRemaining: 0)
+
+    private(set) var derivedRevision = 0
 
     var topItemsErrorMessage: String?
     var isTopItemsRegionRestricted = false
     var entriesErrorMessage: String?
     var isUnauthenticated = false
+
+    private var loadedTopItemsRange: TopItemsTimeRange?
 
     private let diaryRepository: DiaryRepositoryProtocol
     private let spotifyRepository: SpotifyRepositoryProtocol
@@ -46,29 +53,108 @@ final class StatsViewModel {
         self.diaryRepository = diaryRepository
         self.spotifyRepository = spotifyRepository
         self.tasteRepository = tasteRepository
+        recomputeAll()
     }
+
+    // MARK: - Derived data
+
+    private func recomputeAll() {
+        recomputeDerived()
+        recomputeRecapState()
+    }
+
+    private func recomputeDerived() {
+        derived = StatsCalculator.derive(
+            entries: entries,
+            periodStart: periodStart,
+            spotifyTopArtist: topArtists.first
+        )
+        derivedRevision &+= 1
+    }
+
+    private func recomputeRecapState() {
+        recapState = RecapCalculator.state(entries: entries, snapshots: recapSnapshots, period: recapPeriod)
+    }
+
+    // MARK: - Loading
 
     func loadEntries() async {
         entriesErrorMessage = nil
         do {
-            entries = try await diaryRepository.fetchAllEntries()
+            let fetched = try await diaryRepository.fetchAllEntries()
+            if fetched == entries {
+                recomputeAll()
+            } else {
+                entries = fetched
+            }
         } catch {
             entriesErrorMessage = error.localizedDescription
         }
     }
 
     func loadRecapSnapshots() async {
+        let windows = RecapPeriod.allCases.flatMap { period in
+            [RecapCalculator.currentWindow(for: period), RecapCalculator.priorWindow(for: period)]
+        }
+
+        var loaded: [TasteSnapshot] = []
+        for window in windows {
+            guard let snapshot = try? await tasteRepository.fetchLatestSnapshot(from: window.start, to: window.end),
+                  !loaded.contains(where: { $0.id == snapshot.id })
+            else { continue }
+            loaded.append(snapshot)
+        }
+        recapSnapshots = loaded
+    }
+
+    func loadTopItems() async {
+        topItemsErrorMessage = nil
+        isTopItemsRegionRestricted = false
+        isUnauthenticated = false
+
         do {
-            let from = Calendar.current.date(byAdding: .day, value: -95, to: .now) ?? .now
-            recapSnapshots = try await tasteRepository.fetchSnapshots(from: from, to: .now)
+            async let tracks = spotifyRepository.fetchTopTracks(timeRange: timeRange, limit: 10)
+            async let artists = spotifyRepository.fetchTopArtists(timeRange: timeRange, limit: 10)
+            let (fetchedTracks, fetchedArtists) = try await (tracks, artists)
+            topTracks = fetchedTracks
+            topArtists = fetchedArtists
+            loadedTopItemsRange = timeRange
+            await saveSnapshot(tracks: fetchedTracks, artists: fetchedArtists)
+        } catch AuthError.notAuthenticated {
+            isUnauthenticated = true
+        } catch APIError.unauthorized {
+            isUnauthenticated = true
+        } catch APIError.forbidden {
+            isTopItemsRegionRestricted = true
+            loadedTopItemsRange = timeRange
         } catch {
-            recapSnapshots = []
+            if !error.isCancellation {
+                topItemsErrorMessage = error.localizedDescription
+            }
         }
     }
 
-    var recapState: RecapState {
-        RecapCalculator.state(entries: entries, snapshots: recapSnapshots, period: recapPeriod)
+    func loadTopItemsIfNeeded() async {
+        guard loadedTopItemsRange != timeRange else { return }
+        await loadTopItems()
     }
+
+    func refreshAll() async {
+        async let entriesLoad: Void = loadEntries()
+        async let remoteLoad: Void = refreshTopItemsThenSnapshots()
+        _ = await (entriesLoad, remoteLoad)
+    }
+
+    private func refreshTopItemsThenSnapshots() async {
+        await loadTopItems()
+        await loadRecapSnapshots()
+    }
+
+    private func saveSnapshot(tracks: [Track], artists: [Artist]) async {
+        _ = try? await TasteSnapshotRefresher.save(tracks: tracks, artists: artists, into: tasteRepository)
+    }
+
+    // MARK: - Drill-down
 
     func entries(forTrackID trackID: String) -> [DiaryEntry] {
         entries
@@ -85,35 +171,6 @@ final class StatsViewModel {
             .sorted { $0.loggedAt > $1.loggedAt }
     }
 
-    func loadTopItems() async {
-        topItemsErrorMessage = nil
-        isTopItemsRegionRestricted = false
-        isUnauthenticated = false
-
-        do {
-            async let tracks = spotifyRepository.fetchTopTracks(timeRange: timeRange, limit: 10)
-            async let artists = spotifyRepository.fetchTopArtists(timeRange: timeRange, limit: 10)
-            let (fetchedTracks, fetchedArtists) = try await (tracks, artists)
-            topTracks = fetchedTracks
-            topArtists = fetchedArtists
-            await saveSnapshot(tracks: fetchedTracks, artists: fetchedArtists)
-        } catch AuthError.notAuthenticated {
-            isUnauthenticated = true
-        } catch APIError.unauthorized {
-            isUnauthenticated = true
-        } catch APIError.forbidden {
-            isTopItemsRegionRestricted = true
-        } catch {
-            if !error.isCancellation {
-                topItemsErrorMessage = error.localizedDescription
-            }
-        }
-    }
-
-    private func saveSnapshot(tracks: [Track], artists: [Artist]) async {
-        _ = try? await TasteSnapshotRefresher.save(tracks: tracks, artists: artists, into: tasteRepository)
-    }
-
     // MARK: - Period window
 
     private var periodStart: Date? {
@@ -125,205 +182,4 @@ final class StatsViewModel {
         }
     }
 
-    var periodEntries: [DiaryEntry] {
-        guard let periodStart else { return entries }
-        return entries.filter { $0.loggedAt >= periodStart }
-    }
-
-    // MARK: - Summary tiles
-
-    var totalEntryCount: Int { periodEntries.count }
-
-    var distinctTrackCount: Int {
-        Set(periodEntries.compactMap { $0.track?.id }).count
-    }
-
-    var distinctArtistCount: Int {
-        Set(periodEntries.compactMap(\.track).flatMap { $0.artistGroupingKeys.map(\.id) }).count
-    }
-
-    // MARK: - Mood distribution
-
-    struct MoodCount: Identifiable {
-        let tag: MoodTag
-        let count: Int
-        var id: MoodTag { tag }
-    }
-
-    var moodCounts: [MoodCount] {
-        let grouped: [MoodTag: Int] = Dictionary(grouping: periodEntries.flatMap(\.tags)) { $0 }
-            .mapValues(\.count)
-        let unsorted: [MoodCount] = grouped.map { tag, count in MoodCount(tag: tag, count: count) }
-        let sorted: [MoodCount] = unsorted.sorted { lhs, rhs in
-            guard lhs.count == rhs.count else { return lhs.count > rhs.count }
-            return lhs.tag.label < rhs.tag.label
-        }
-        return Array(sorted.prefix(8))
-    }
-
-    // MARK: - Activity over time
-
-    struct ActivityBucket: Identifiable {
-        let date: Date
-        let count: Int
-        var id: Date { date }
-    }
-
-    var activityBucketComponent: Calendar.Component {
-        guard let earliest = periodEntries.map(\.loggedAt).min(),
-              let latest = periodEntries.map(\.loggedAt).max() else {
-            return .day
-        }
-        let spanDays = Calendar.current.dateComponents([.day], from: earliest, to: latest).day ?? 0
-        switch spanDays {
-        case ..<31: return .day
-        case ..<210: return .weekOfYear
-        default: return .month
-        }
-    }
-
-    var activityBuckets: [ActivityBucket] {
-        let calendar = Calendar.current
-        let component = activityBucketComponent
-        let grouped = Dictionary(grouping: periodEntries) { entry in
-            calendar.dateInterval(of: component, for: entry.loggedAt)?.start ?? entry.loggedAt
-        }
-        return grouped
-            .map { ActivityBucket(date: $0.key, count: $0.value.count) }
-            .sorted { $0.date < $1.date }
-    }
-
-    func activityBucket(at date: Date?) -> ActivityBucket? {
-        guard let date else { return nil }
-        return activityBuckets.first { $0.date == date }
-    }
-
-    func activityBucket(matching tappedDate: Date) -> ActivityBucket? {
-        let calendar = Calendar.current
-        return activityBuckets.first { bucket in
-            guard let bucketEnd = calendar.date(byAdding: activityBucketComponent, value: 1, to: bucket.date) else {
-                return false
-            }
-            return tappedDate >= bucket.date && tappedDate < bucketEnd
-        }
-    }
-
-    var currentStreak: Int {
-        StreakCalculator.currentStreak(loggedDates: entries.map(\.loggedAt))
-    }
-
-    var longestStreak: Int {
-        StreakCalculator.longestStreak(loggedDates: entries.map(\.loggedAt))
-    }
-
-    var discoveryRate: Double? {
-        let periodArtistIds = Set(periodEntries.compactMap(\.track).flatMap { $0.artistGroupingKeys.map(\.id) })
-        guard !periodArtistIds.isEmpty else { return nil }
-
-        var firstAppearance: [String: Date] = [:]
-        for entry in entries {
-            guard let track = entry.track else { continue }
-            for key in track.artistGroupingKeys {
-                if let existing = firstAppearance[key.id] {
-                    firstAppearance[key.id] = min(existing, entry.loggedAt)
-                } else {
-                    firstAppearance[key.id] = entry.loggedAt
-                }
-            }
-        }
-
-        let windowStart = periodStart ?? .distantPast
-        let newCount = periodArtistIds.filter { (firstAppearance[$0] ?? .distantPast) >= windowStart }.count
-        return Double(newCount) / Double(periodArtistIds.count)
-    }
-
-    struct ReplayedTrack {
-        let track: Track
-        let count: Int
-    }
-
-    var mostReplayedTrack: ReplayedTrack? {
-        let grouped = Dictionary(grouping: periodEntries.compactMap(\.track)) { $0.id }
-        let sorted = grouped.values.sorted { lhs, rhs in
-            guard lhs.count == rhs.count else { return lhs.count > rhs.count }
-            return (lhs.first?.name ?? "") < (rhs.first?.name ?? "")
-        }
-        guard let topGroup = sorted.first, topGroup.count > 1, let track = topGroup.first else { return nil }
-        return ReplayedTrack(track: track, count: topGroup.count)
-    }
-
-    var topArtistMismatch: (spotifyTop: Artist, diaryTopName: String, diaryTopCount: Int)? {
-        guard let spotifyTop = topArtists.first else { return nil }
-
-        let diaryArtists = periodEntries.compactMap(\.track).flatMap { $0.artistGroupingKeys }
-        let diaryCounts = Dictionary(grouping: diaryArtists) { $0.id }.mapValues(\.count)
-        let sorted = diaryCounts.sorted { lhs, rhs in
-            guard lhs.value == rhs.value else { return lhs.value > rhs.value }
-            return lhs.key < rhs.key
-        }
-        guard let top = sorted.first,
-              top.key != spotifyTop.id,
-              let diaryTopName = diaryArtists.first(where: { $0.id == top.key })?.name
-        else { return nil }
-
-        return (spotifyTop, diaryTopName, top.value)
-    }
-
-    struct EngagementMoodRow: Identifiable {
-        let level: EngagementLevel
-        let count: Int
-        var id: EngagementLevel { level }
-    }
-
-    var engagementMoodBreakdown: [EngagementMoodRow] {
-        EngagementLevel.allCases.compactMap { level in
-            let levelEntries = periodEntries.filter { $0.engagementLevel == level }
-            guard !levelEntries.isEmpty else { return nil }
-            return EngagementMoodRow(level: level, count: levelEntries.count)
-        }
-    }
-
-    struct HeatmapCell: Identifiable {
-        let weekday: Int
-        let hourBlockStart: Int
-        let count: Int
-        var id: String { "\(weekday)-\(hourBlockStart)" }
-    }
-
-    static let heatmapHourBlockSize = 4
-
-    var activityHeatmap: [HeatmapCell] {
-        let calendar = Calendar.current
-        let blockSize = Self.heatmapHourBlockSize
-        var counts: [String: Int] = [:]
-        for entry in periodEntries {
-            let weekday = calendar.component(.weekday, from: entry.playedAt)
-            let hour = calendar.component(.hour, from: entry.playedAt)
-            let blockStart = (hour / blockSize) * blockSize
-            counts["\(weekday)-\(blockStart)", default: 0] += 1
-        }
-        return (1...7).flatMap { weekday in
-            stride(from: 0, to: 24, by: blockSize).map { blockStart in
-                HeatmapCell(weekday: weekday, hourBlockStart: blockStart, count: counts["\(weekday)-\(blockStart)"] ?? 0)
-            }
-        }
-    }
-
-    var heatmapMaxCount: Int {
-        activityHeatmap.map(\.count).max() ?? 0
-    }
-
-    private func axisTickValues(forMax maxCount: Int) -> [Int] {
-        guard maxCount > 0 else { return [0] }
-        let rawStep = Double(maxCount) / 4
-        let magnitude = pow(10, floor(log10(max(rawStep, 1))))
-        let normalized = rawStep / magnitude
-        let niceNormalized: Double = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10
-        let step = max(1, Int(niceNormalized * magnitude))
-        return Array(stride(from: 0, through: maxCount, by: step))
-    }
-
-    var moodAxisTickValues: [Int] {
-        axisTickValues(forMax: moodCounts.map(\.count).max() ?? 0)
-    }
 }

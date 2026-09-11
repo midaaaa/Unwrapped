@@ -23,31 +23,31 @@ struct StatsInsightsSection: View {
                 discoveryRow
                 replayedRow
                 mismatchRow
-                ForEach(viewModel.engagementMoodBreakdown) { engagementRow($0) }
+                ForEach(viewModel.derived.engagementMoodBreakdown) { engagementRow($0) }
             }
         }
     }
 
     private var hasAnyInsight: Bool {
-        viewModel.currentStreak > 0
-            || viewModel.discoveryRate != nil
-            || viewModel.mostReplayedTrack != nil
-            || viewModel.topArtistMismatch != nil
-            || !viewModel.engagementMoodBreakdown.isEmpty
+        viewModel.derived.currentStreak > 0
+            || viewModel.derived.discoveryRate != nil
+            || viewModel.derived.mostReplayedTrack != nil
+            || viewModel.derived.topArtistMismatch != nil
+            || !viewModel.derived.engagementMoodBreakdown.isEmpty
     }
 
     @ViewBuilder
     private var streakRow: some View {
-        if viewModel.currentStreak > 0 {
+        if viewModel.derived.currentStreak > 0 {
             insightRow(systemImage: "flame.fill", tint: .red) {
                 Text("Streak")
                     .font(.subheadline.weight(.medium))
                 HStack(spacing: 4) {
-                    Text("\(viewModel.currentStreak) days")
-                    if viewModel.longestStreak > viewModel.currentStreak {
+                    Text("\(viewModel.derived.currentStreak) days")
+                    if viewModel.derived.longestStreak > viewModel.derived.currentStreak {
                         Text("·")
                         Text("Best")
-                        Text("\(viewModel.longestStreak) days")
+                        Text("\(viewModel.derived.longestStreak) days")
                     }
                 }
                 .font(.caption)
@@ -58,7 +58,7 @@ struct StatsInsightsSection: View {
 
     @ViewBuilder
     private var discoveryRow: some View {
-        if let rate = viewModel.discoveryRate {
+        if let rate = viewModel.derived.discoveryRate {
             insightRow(systemImage: "sparkles", tint: .purple) {
                 Text("\(rate.formatted(.percent.precision(.fractionLength(0)))) new artists")
                     .font(.subheadline.weight(.medium))
@@ -71,7 +71,7 @@ struct StatsInsightsSection: View {
 
     @ViewBuilder
     private var replayedRow: some View {
-        if let replayed = viewModel.mostReplayedTrack {
+        if let replayed = viewModel.derived.mostReplayedTrack {
             HStack(spacing: 12) {
                 CachedAsyncImage(url: replayed.track.albumImageURL, size: 36, sizing: .fixedSquare) {
                     Image(systemName: "music.note")
@@ -98,7 +98,7 @@ struct StatsInsightsSection: View {
 
     @ViewBuilder
     private var mismatchRow: some View {
-        if let mismatch = viewModel.topArtistMismatch {
+        if let mismatch = viewModel.derived.topArtistMismatch {
             insightRow(systemImage: "arrow.left.arrow.right", tint: .blue) {
                 Text("Spotify says \(mismatch.spotifyTop.name)")
                     .font(.subheadline.weight(.medium))
@@ -110,7 +110,7 @@ struct StatsInsightsSection: View {
     }
 
     @ViewBuilder
-    private func engagementRow(_ row: StatsViewModel.EngagementMoodRow) -> some View {
+    private func engagementRow(_ row: StatsEngagementRow) -> some View {
         insightRow(systemImage: row.level.systemImage, tint: .indigo) {
             if row.level == .quickTap {
                 Text("\(row.count) reactions")

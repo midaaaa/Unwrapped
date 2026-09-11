@@ -19,7 +19,7 @@ struct StatsMoodSection: View {
                     systemImage: "exclamationmark.triangle",
                     description: Text(message)
                 )
-            } else if viewModel.moodCounts.isEmpty {
+            } else if viewModel.derived.moodCounts.isEmpty {
                 EmptyStateRow(
                     title: "No moods logged yet",
                     systemImage: "face.smiling",
@@ -32,7 +32,10 @@ struct StatsMoodSection: View {
     }
 
     private var chart: some View {
-        Chart(viewModel.moodCounts) { item in
+        let moods = viewModel.derived.moodCounts
+        let ticks = viewModel.derived.moodAxisTickValues
+
+        return Chart(moods) { item in
             BarMark(
                 x: .value("Count", item.count),
                 y: .value("Mood", "\(item.tag.emoji) \(item.tag.label)")
@@ -42,7 +45,7 @@ struct StatsMoodSection: View {
         }
         .chartLegend(.hidden)
         .chartXAxis {
-            AxisMarks(values: viewModel.moodAxisTickValues) {
+            AxisMarks(values: ticks) {
                 AxisGridLine()
             }
         }
@@ -55,12 +58,12 @@ struct StatsMoodSection: View {
                 }
             }
         }
-        .chartXScale(domain: 0...max(viewModel.moodCounts.map(\.count).max() ?? 1, 1))
+        .chartXScale(domain: 0...max(moods.map(\.count).max() ?? 1, 1))
         .chartOverlay { proxy in
             GeometryReader { geometry in
                 if let plotAnchor = proxy.plotFrame {
                     let plotFrame = geometry[plotAnchor]
-                    ForEach(viewModel.moodAxisTickValues, id: \.self) { tick in
+                    ForEach(ticks, id: \.self) { tick in
                         if let x = proxy.position(forX: tick) {
                             Text("\(tick)")
                                 .font(.caption)
@@ -75,6 +78,6 @@ struct StatsMoodSection: View {
         .padding(.horizontal, 6)
         .padding(.top, 8)
         .padding(.bottom, 16)
-        .frame(height: CGFloat(viewModel.moodCounts.count) * 28 + 28)
+        .frame(height: CGFloat(moods.count) * 28 + 28)
     }
 }

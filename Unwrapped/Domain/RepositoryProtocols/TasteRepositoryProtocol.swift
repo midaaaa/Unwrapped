@@ -15,6 +15,8 @@ protocol TasteRepositoryProtocol: Sendable {
 
     func fetchLatestSnapshot() async throws -> TasteSnapshot?
 
+    func fetchLatestSnapshot(from: Date, to: Date) async throws -> TasteSnapshot?
+
     func deleteSnapshot(id: UUID) async throws
 
     func deleteAllSnapshots() async throws

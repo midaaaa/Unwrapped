@@ -106,6 +106,13 @@ struct MainTabView: View {
             guard isAuthenticated else { return }
             await profileViewModel.load()
         }
+        .task {
+            await warmUpStats()
+        }
+        .task(id: isAuthenticated) {
+            guard isAuthenticated else { return }
+            await statsViewModel.loadTopItemsIfNeeded()
+        }
         .onChange(of: isAuthenticated) { _, newValue in
             guard !newValue else { return }
             playerViewModel.stopPolling()
@@ -119,6 +126,11 @@ struct MainTabView: View {
     private func reloadDiaryAndStats() async {
         await diaryViewModel.load()
         await statsViewModel.loadEntries()
+    }
+
+    private func warmUpStats() async {
+        await statsViewModel.loadEntries()
+        await statsViewModel.loadRecapSnapshots()
     }
 
     private var tabs: some View {

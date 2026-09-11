@@ -45,26 +45,29 @@ actor DiaryRepository: DiaryRepositoryProtocol {
     }
 
     func fetchEntries(from: Date, to: Date) async throws -> [DiaryEntry] {
-        let descriptor = FetchDescriptor<DiaryEntryModel>(
+        var descriptor = FetchDescriptor<DiaryEntryModel>(
             predicate: #Predicate { $0.loggedAt >= from && $0.loggedAt < to },
             sortBy: [SortDescriptor(\.loggedAt)]
         )
+        descriptor.relationshipKeyPathsForPrefetching = [\.track]
 
         return try modelContext.fetch(descriptor).map(Self.mapToDomain)
     }
 
     func fetchEntries(forTrackID trackID: String) async throws -> [DiaryEntry] {
-        let descriptor = FetchDescriptor<DiaryEntryModel>(
+        var descriptor = FetchDescriptor<DiaryEntryModel>(
             predicate: #Predicate { $0.track?.spotifyId == trackID },
             sortBy: [SortDescriptor(\.progressMs)]
         )
+        descriptor.relationshipKeyPathsForPrefetching = [\.track]
         return try modelContext.fetch(descriptor).map(Self.mapToDomain)
     }
 
     func fetchAllEntries() async throws -> [DiaryEntry] {
-        let descriptor = FetchDescriptor<DiaryEntryModel>(
+        var descriptor = FetchDescriptor<DiaryEntryModel>(
             sortBy: [SortDescriptor(\.loggedAt, order: .reverse)]
         )
+        descriptor.relationshipKeyPathsForPrefetching = [\.track]
 
         return try modelContext.fetch(descriptor).map(Self.mapToDomain)
     }

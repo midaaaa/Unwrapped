@@ -13,7 +13,7 @@ struct StatsHeatmapSection: View {
 
     var body: some View {
         Section("When You Listen") {
-            if viewModel.activityHeatmap.allSatisfy({ $0.count == 0 }) {
+            if viewModel.derived.activityHeatmap.allSatisfy({ $0.count == 0 }) {
                 EmptyStateRow(
                     title: "No activity yet",
                     systemImage: "clock",
@@ -31,12 +31,12 @@ struct StatsHeatmapSection: View {
     }
 
     private func hourBlockLabel(_ start: Int) -> String {
-        let end = start + StatsViewModel.heatmapHourBlockSize
+        let end = start + StatsCalculator.heatmapHourBlockSize
         return "\(start)–\(end)"
     }
 
     private var chart: some View {
-        Chart(viewModel.activityHeatmap) { cell in
+        Chart(viewModel.derived.activityHeatmap) { cell in
             RectangleMark(
                 x: .value("Time", hourBlockLabel(cell.hourBlockStart)),
                 y: .value("Day", weekdaySymbol(cell.weekday))

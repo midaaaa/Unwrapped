@@ -113,6 +113,10 @@ actor PreviewTasteRepository: TasteRepositoryProtocol {
         snapshots.values.filter { $0.date >= from && $0.date <= to }
     }
 
+    func fetchLatestSnapshot(from: Date, to: Date) async throws -> TasteSnapshot? {
+        try await fetchSnapshots(from: from, to: to).max { $0.date < $1.date }
+    }
+
     func fetchLatestSnapshot() async throws -> TasteSnapshot? {
         snapshots.values.sorted { $0.date > $1.date }.first
     }
