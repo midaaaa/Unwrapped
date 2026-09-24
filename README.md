@@ -87,7 +87,14 @@ Stack, no third-party dependencies:
 
 ## Running it yourself
 
-You'll need your own Spotify app registered at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) — a redirect URI of `unwrapped://callback` and the usual read/playback scopes are enough. Drop your client ID into `Unwrapped/Support/SpotifyConfig.swift`, open the project in Xcode, and run it on a device or simulator running iOS 26. Since Spotify's developer program caps unverified apps at 25 authorized users, you'll need to add your own Spotify account as a user on the app in the dashboard before login will work.
+You'll need your own Spotify app registered at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard):
+
+1. Create an app and add `unwrapped://callback` as a redirect URI.
+2. Under **User Management**, add the Spotify account you'll log in with — apps in development mode are capped at 25 allowlisted users, and login fails for anyone not on the list.
+3. Put your client ID into `Unwrapped/Support/SpotifyConfig.swift`. There's no client secret — auth is PKCE.
+4. Open `Unwrapped.xcodeproj` in Xcode 26 and run on a device or simulator with iOS 26+. `⌘U` runs the unit tests.
+
+The app requests these scopes: `user-read-private`, `user-read-recently-played`, `user-top-read`, `user-read-currently-playing`, `user-read-playback-state`, `user-modify-playback-state`. Everything read-only works on a free account; play/pause from the player needs Spotify Premium, since that's what the playback-control endpoints require.
 
 ## What this isn't
 
